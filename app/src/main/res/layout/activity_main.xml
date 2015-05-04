@@ -1,12 +1,18 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              tools:context=".MainActivity">
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:tools="http://schemas.android.com/tools"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+             tools:context=".MainActivity">
     <android.support.v7.widget.RecyclerView
             android:id="@+id/recycler_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:visibility="gone">
     </android.support.v7.widget.RecyclerView>
+    <ImageView android:id="@+id/menu_popup_launcher"
+                 android:layout_gravity="bottom|center"
+                 android:src="@drawable/ic_launcher"
+                 android:layout_width="wrap_content"
+                 android:layout_height="wrap_content"/>
 
-</LinearLayout>
+</FrameLayout>
