@@ -30,8 +30,6 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     public void onBindViewHolder(AppHolder holder, int position) {
         holder.mAppLogo.setImageDrawable(mInstalledApps.get(position).getIcon());
         holder.mAppName.setText(mInstalledApps.get(position).getName());
-
-
     }
 
     @Override
