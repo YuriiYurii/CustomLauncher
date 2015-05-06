@@ -7,23 +7,22 @@
     <FrameLayout android:layout_width="match_parent"
                  android:layout_height="match_parent"
                  android:id="@+id/items_menu"
-                 android:visibility="invisible"
-                 android:background="@drawable/photo_background">
+                 android:visibility="invisible">
         <android.support.v7.widget.RecyclerView
                 android:id="@+id/recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
         </android.support.v7.widget.RecyclerView>
 
-        <com.example.yuriitsap.customlauncher.SpotlightView
-                android:id="@+id/spot_view"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:alpha="0.0"
-                s:target="@id/recycler_view"
-                s:mask="@drawable/spot_mask"/>
+
 
     </FrameLayout>
+    <com.example.yuriitsap.customlauncher.SpotlightView
+            android:id="@+id/spot_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            s:target="@id/recycler_view"
+            s:mask="@drawable/spot_mask"/>
 
     <ImageView android:id="@+id/menu_popup_launcher"
                android:layout_gravity="bottom|center"

@@ -13,7 +13,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.GestureDetector;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -30,7 +29,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     private boolean mItemsShown = false;
     private SpotlightView mSpotlightView;
     private View mMenuItems;
-    private GestureDetector mGestureDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,20 +45,15 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 LinearLayoutManager.HORIZONTAL, false);
         mRecyclerView.setLayoutManager(gridLayoutManager);
         mSpotlightView = (SpotlightView) findViewById(R.id.spot_view);
-        mGestureDetector = new GestureDetector(new LauncherGestureListener());
-        mRecyclerView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                return mGestureDetector.onTouchEvent(event);
-            }
-        });
     }
-
 
     @Override
     public void onClick(View v) {
         Log.e("TAG", "onClick");
         mItemsShown = true;
+        mSpotlightView.setMaskX(mSpotlightView.getWidth() / 2.0f);
+        mSpotlightView.setMaskY(mSpotlightView.getHeight() / 2.0f);
+        findViewById(R.id.spot_view).setVisibility(View.VISIBLE);
 
         mSpotlightView.animate().alpha(1.0f).withLayer().withEndAction(new Runnable() {
             @Override
@@ -73,6 +66,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 superScale.setDuration(250);
                 AnimatorSet set = new AnimatorSet();
                 set.play(superScale);
+
                 set.start();
                 set.addListener(new AnimatorListenerAdapter() {
                     @Override
@@ -86,11 +80,11 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         });
     }
 
+
     @Override
     public void onBackPressed() {
         if (mItemsShown) {
-            mMenuLauncher.setVisibility(View.VISIBLE);
-            mMenuItems.setVisibility(View.INVISIBLE);
+            hideMenu();
             mItemsShown = false;
         }
     }
@@ -99,8 +93,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (mItemsShown) {
-            mMenuLauncher.setVisibility(View.VISIBLE);
-            mMenuItems.setVisibility(View.INVISIBLE);
+            hideMenu();
             mItemsShown = false;
         }
     }
@@ -116,28 +109,32 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         return appInfoList;
     }
 
-    private class LauncherGestureListener extends GestureDetector.SimpleOnGestureListener {
-
-        @Override
-        public void onLongPress(final MotionEvent e) {
-            Log.e("TAG", "onLongPress");
-            final View view = mRecyclerView.findChildViewUnder(e.getX(), e.getY());
-            if (view != null) {
-                view.animate().scaleX(1.2f).scaleY(1.2f).setListener(new AnimatorListenerAdapter() {
+    private void hideMenu() {
+        mSpotlightView.animate().alpha(1.0f).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mSpotlightView.setVisibility(View.VISIBLE);
+                findViewById(R.id.items_menu).setVisibility(View.GONE);
+                final ObjectAnimator superScale = ObjectAnimator
+                        .ofFloat(mSpotlightView, "maskScale",
+                                0.0f);
+                superScale.setDuration(250);
+                AnimatorSet set = new AnimatorSet();
+                Log.e("TAG", "entered");
+                set.play(superScale);
+                set.start();
+                set.addListener(new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
-                        view.setX(e.getX());
-                        view.setY(e.getY());
+                        mMenuLauncher.setVisibility(View.VISIBLE);
+                        mSpotlightView.setVisibility(View.GONE);
                         mMenuItems.setVisibility(View.GONE);
-                    }
-                }).start();
 
+
+                    }
+                });
             }
-        }
-        @Override
-        public boolean onDown(MotionEvent e) {
-            Log.e("TAG", "onDown");
-            return super.onDown(e);
-        }
+
+        });
     }
 }

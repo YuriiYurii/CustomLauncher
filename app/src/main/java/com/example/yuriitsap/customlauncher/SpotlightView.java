@@ -10,6 +10,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Shader;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 
@@ -39,6 +40,7 @@ public class SpotlightView extends View {
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.SpotlightView, 0, 0);
         try {
             mTargetId = a.getResourceId(R.styleable.SpotlightView_target, 0);
+
             int maskId = a.getResourceId(R.styleable.SpotlightView_mask, 0);
             mMask = convertToAlphaMask(BitmapFactory.decodeResource(getResources(), maskId));
 
@@ -80,12 +82,16 @@ public class SpotlightView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-
+        Log.e("TAG", "---------------start-------------------");
         float maskW = mMask.getWidth() / 2.0f;
         float maskH = mMask.getHeight() / 2.0f;
+        Log.e("TAG", "maskW = " + maskW);
+        Log.e("TAG", "maskH = " + maskH);
 
         float x = mMaskX - maskW * mMaskScale;
         float y = mMaskY - maskH * mMaskScale;
+        Log.e("TAG", "x = " + x);
+        Log.e("TAG", "y = " + y);
 
         mShaderMatrix.setScale(1.0f / mMaskScale, 1.0f / mMaskScale);
         mShaderMatrix.preTranslate(-x, -y);
@@ -110,10 +116,10 @@ public class SpotlightView extends View {
             @Override
             public void onGlobalLayout() {
                 createShader();
-
                 if (mCallback != null) {
                     mCallback.onSetupAnimation(SpotlightView.this);
                 }
+
                 getViewTreeObserver().removeGlobalOnLayoutListener(this);
             }
         });
