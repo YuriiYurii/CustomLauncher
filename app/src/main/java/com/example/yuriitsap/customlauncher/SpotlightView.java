@@ -39,7 +39,6 @@ public class SpotlightView extends View {
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.SpotlightView, 0, 0);
         try {
             mTargetId = a.getResourceId(R.styleable.SpotlightView_target, 0);
-
             int maskId = a.getResourceId(R.styleable.SpotlightView_mask, 0);
             mMask = convertToAlphaMask(BitmapFactory.decodeResource(getResources(), maskId));
 
@@ -111,7 +110,6 @@ public class SpotlightView extends View {
             @Override
             public void onGlobalLayout() {
                 createShader();
-                setMaskScale(1.0f);
 
                 if (mCallback != null) {
                     mCallback.onSetupAnimation(SpotlightView.this);
