@@ -114,7 +114,6 @@ public class SpotlightView extends View {
                 if (mCallback != null) {
                     mCallback.onSetupAnimation(SpotlightView.this);
                 }
-
                 getViewTreeObserver().removeGlobalOnLayoutListener(this);
             }
         });

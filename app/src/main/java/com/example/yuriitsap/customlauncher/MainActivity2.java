@@ -30,7 +30,6 @@ public class MainActivity2 extends ActionBarActivity {
     private void createAnimation(final SpotlightView spotlight) {
         spotlight.setMaskX(spotlight.getWidth()/2.0f);
         spotlight.setMaskY(spotlight.getHeight()/2.0f);
-
         spotlight.animate().alpha(1.0f).withLayer().withEndAction(new Runnable() {
             @Override
             public void run() {
@@ -42,17 +41,14 @@ public class MainActivity2 extends ActionBarActivity {
                 AnimatorSet set = new AnimatorSet();
                 set.play(superScale);
                 set.start();
-
                 set.addListener(new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         findViewById(R.id.content).setVisibility(View.VISIBLE);
                         findViewById(R.id.spotlight).setVisibility(View.GONE);
-                        getWindow().setBackgroundDrawable(null);
                     }
                 });
             }
         });
     }
-
 }
