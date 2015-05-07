@@ -12,57 +12,46 @@ import android.widget.TextView;
 import java.util.List;
 
 /**
- * Created by yuriitsap on 29.04.15.
+ * Created by yuriitsap on 07.05.15.
  */
-public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.AppHolder> {
+public class MainPageAdapter extends RecyclerView.Adapter<MainPageAdapter.ItemHolder> {
 
-    private List<AppInfo> mInstalledApps;
-    private OnLongClickCallback mOnLongClickCallback;
+    private List<AppInfo> mMainPageItems;
 
-    public RecyclerViewAdapter(List<AppInfo> installedApps,
-            OnLongClickCallback onLongClickCallback) {
-        mInstalledApps = installedApps;
-        mOnLongClickCallback = onLongClickCallback;
+    public MainPageAdapter(List<AppInfo> mainPageItems) {
+        mMainPageItems = mainPageItems;
     }
 
     @Override
-    public AppHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return new AppHolder(LayoutInflater.from(parent.getContext())
+    public ItemHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        return new ItemHolder(LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.recycler_item, parent, false));
     }
 
     @Override
-    public void onBindViewHolder(AppHolder holder, int position) {
-        holder.mAppLogo.setImageDrawable(mInstalledApps.get(position).getIcon());
-        holder.mAppName.setText(mInstalledApps.get(position).getName());
+    public void onBindViewHolder(ItemHolder holder, int position) {
+        holder.mImageView.setImageDrawable(mMainPageItems.get(position).getIcon());
+        holder.mTextView.setText(mMainPageItems.get(position).getName());
     }
 
     @Override
     public int getItemCount() {
-        return mInstalledApps.size();
+        return mMainPageItems.size();
     }
 
-    public class AppHolder extends RecyclerView.ViewHolder
-            implements View.OnLongClickListener,View.OnDragListener{
+    public class ItemHolder extends RecyclerView.ViewHolder implements View.OnDragListener {
 
-        private ImageView mAppLogo;
-        private TextView mAppName;
+        public ImageView mImageView;
+        public TextView mTextView;
         private View mParent;
 
-        public AppHolder(View itemView) {
+        public ItemHolder(View itemView) {
             super(itemView);
 
             mParent = itemView;
-            mAppLogo = (ImageView) itemView.findViewById(R.id.app_icon_logo);
-            mAppName = (TextView) itemView.findViewById(R.id.app_text);
-            itemView.setOnLongClickListener(this);
+            mImageView = (ImageView) itemView.findViewById(R.id.app_icon_logo);
+            mTextView = (TextView) itemView.findViewById(R.id.app_text);
             itemView.setOnDragListener(this);
-        }
-
-        @Override
-        public boolean onLongClick(View v) {
-            mOnLongClickCallback.onItemLongClick(v);
-            return true;
         }
 
         @Override
@@ -83,7 +72,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
                     break;
                 case DragEvent.ACTION_DROP:
                     View view = (View) event.getLocalState();
-                    mInstalledApps.set(getPosition(), new AppInfo().setIcon(
+                    mMainPageItems.set(getPosition(), new AppInfo().setIcon(
                             ((ImageView) view.findViewById(R.id.app_icon_logo)).getDrawable())
                             .setName(((TextView) view.findViewById(R.id.app_text)).getText()));
                     notifyItemChanged(getPosition());
@@ -101,8 +90,19 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         }
     }
 
-    public interface OnLongClickCallback {
+    public void insertItem(AppInfo item) {
+        mMainPageItems.add(item);
+        notifyItemChanged(mMainPageItems.size() - 1);
+    }
 
-        void onItemLongClick(View item);
+    public void deleteItem(AppInfo item) {
+        notifyItemRemoved(mMainPageItems.indexOf(item));
+        mMainPageItems.remove(item);
+    }
+
+    public void setMainPageItems(
+            List<AppInfo> mainPageItems) {
+        mMainPageItems = mainPageItems;
+        notifyDataSetChanged();
     }
 }

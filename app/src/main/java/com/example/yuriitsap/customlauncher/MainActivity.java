@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
@@ -12,23 +13,25 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 
-public class MainActivity extends ActionBarActivity implements View.OnClickListener {
+public class MainActivity extends ActionBarActivity
+        implements View.OnClickListener, RecyclerViewAdapter.OnLongClickCallback {
 
     private final Intent mMainIntent = new Intent(Intent.ACTION_MAIN, null)
             .addCategory(Intent.CATEGORY_LAUNCHER);
     private ImageView mMenuLauncher;
-    private RecyclerView mRecyclerView;
+    private RecyclerView mMenuItems, mMainPageItems;
     private boolean mItemsShown = false;
     private SpotlightView mSpotlightView;
-    private View mMenuItems;
+    private List<AppInfo> mMainPageItemsDummy;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,12 +41,14 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         getAppList();
         mMenuLauncher = (ImageView) findViewById(R.id.menu_popup_launcher);
         mMenuLauncher.setOnClickListener(this);
-        mMenuItems = findViewById(R.id.items_menu);
-        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        mRecyclerView.setAdapter(new RecyclerViewAdapter(getAppList()));
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(MainActivity.this, 4,
-                LinearLayoutManager.HORIZONTAL, false);
-        mRecyclerView.setLayoutManager(gridLayoutManager);
+        mMainPageItems = (RecyclerView) findViewById(R.id.main_page_items);
+        mMainPageItems.setAdapter(new RecyclerViewAdapter(mMainPageItemsDummy, this));
+        mMainPageItems.setLayoutManager(new GridLayoutManager(MainActivity.this, 4,
+                LinearLayoutManager.HORIZONTAL, false));
+        mMenuItems = (RecyclerView) findViewById(R.id.recycler_view);
+        mMenuItems.setAdapter(new RecyclerViewAdapter(getAppList(), this));
+        mMenuItems.setLayoutManager(new GridLayoutManager(MainActivity.this, 4,
+                LinearLayoutManager.HORIZONTAL, false));
         mSpotlightView = (SpotlightView) findViewById(R.id.spot_view);
     }
 
@@ -53,9 +58,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         mItemsShown = true;
         mSpotlightView.setMaskX(mSpotlightView.getWidth() / 2.0f);
         mSpotlightView.setMaskY(mSpotlightView.getHeight() / 2.0f);
-        findViewById(R.id.spot_view).setVisibility(View.VISIBLE);
 
-        mSpotlightView.animate().alpha(1.0f).withLayer().withEndAction(new Runnable() {
+        mMainPageItems.animate().alpha(0.0f).withLayer().withEndAction(new Runnable() {
             @Override
             public void run() {
                 final ObjectAnimator superScale = ObjectAnimator
@@ -71,9 +75,11 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 set.addListener(new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
+                        mMainPageItems.setVisibility(View.INVISIBLE);
+                        mMenuLauncher.setVisibility(View.INVISIBLE);
+                        findViewById(R.id.spot_view).setVisibility(View.INVISIBLE);
                         findViewById(R.id.items_menu).setVisibility(View.VISIBLE);
-                        findViewById(R.id.spot_view).setVisibility(View.GONE);
-                        mMenuLauncher.setVisibility(View.GONE);
+
                     }
                 });
             }
@@ -98,23 +104,17 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         }
     }
 
-    private List<AppInfo> getAppList() {
-        List<AppInfo> appInfoList = new LinkedList<>();
-        for (ResolveInfo resolveInfo : MainActivity.this.getPackageManager()
-                .queryIntentActivities(mMainIntent, 0)) {
-            appInfoList.add(new AppInfo()
-                    .setIcon(resolveInfo.loadIcon(MainActivity.this.getPackageManager()))
-                    .setName(resolveInfo.loadLabel(MainActivity.this.getPackageManager())));
-        }
-        return appInfoList;
-    }
-
-    private void hideMenu() {
-        mSpotlightView.animate().alpha(1.0f).setListener(new AnimatorListenerAdapter() {
+    @Override
+    public void onItemLongClick(final View item) {
+        hideMenu();
+        final ClipData clipData = ClipData.newPlainText("descripion",
+                (CharSequence) ((TextView) item.findViewById(R.id.app_text)).getText());
+        final View.DragShadowBuilder dragShadowBuilder = new View.DragShadowBuilder(item);
+        mMainPageItems.animate().alpha(1.0f).setListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
                 mSpotlightView.setVisibility(View.VISIBLE);
-                findViewById(R.id.items_menu).setVisibility(View.GONE);
+                findViewById(R.id.items_menu).setVisibility(View.INVISIBLE);
                 final ObjectAnimator superScale = ObjectAnimator
                         .ofFloat(mSpotlightView, "maskScale",
                                 0.0f);
@@ -126,15 +126,58 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 set.addListener(new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
+                        mSpotlightView.setVisibility(View.INVISIBLE);
+                        findViewById(R.id.main_page_items).setVisibility(View.VISIBLE);
                         mMenuLauncher.setVisibility(View.VISIBLE);
-                        mSpotlightView.setVisibility(View.GONE);
-                        mMenuItems.setVisibility(View.GONE);
-
-
+                        item.startDrag(clipData, dragShadowBuilder, item, 0);
                     }
                 });
             }
+        });
 
+
+    }
+
+    public List<AppInfo> getAppList() {
+        List<AppInfo> appInfoList = new LinkedList<>();
+        mMainPageItemsDummy = new ArrayList<>(16);
+        int i = 0;
+        for (ResolveInfo resolveInfo : MainActivity.this.getPackageManager()
+                .queryIntentActivities(mMainIntent, 0)) {
+            i++;
+            appInfoList.add(new AppInfo()
+                    .setIcon(resolveInfo.loadIcon(MainActivity.this.getPackageManager()))
+                    .setName(resolveInfo.loadLabel(MainActivity.this.getPackageManager())));
+            mMainPageItemsDummy.add(new AppInfo()
+                    .setIcon(getResources().getDrawable(R.drawable.shape))
+                    .setName(""));
+        }
+        return appInfoList;
+    }
+
+    private void hideMenu() {
+        mMainPageItems.animate().alpha(1.0f).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mSpotlightView.setVisibility(View.VISIBLE);
+                findViewById(R.id.items_menu).setVisibility(View.INVISIBLE);
+                final ObjectAnimator superScale = ObjectAnimator
+                        .ofFloat(mSpotlightView, "maskScale",
+                                0.0f);
+                superScale.setDuration(250);
+                AnimatorSet set = new AnimatorSet();
+                Log.e("TAG", "entered");
+                set.play(superScale);
+                set.start();
+                set.addListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        mSpotlightView.setVisibility(View.INVISIBLE);
+                        findViewById(R.id.main_page_items).setVisibility(View.VISIBLE);
+                        mMenuLauncher.setVisibility(View.VISIBLE);
+                    }
+                });
+            }
         });
     }
 }
