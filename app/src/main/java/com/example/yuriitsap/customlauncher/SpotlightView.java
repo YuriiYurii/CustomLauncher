@@ -10,7 +10,6 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Shader;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 
@@ -23,16 +22,10 @@ public class SpotlightView extends View {
     private float mMaskY;
     private float mMaskScale;
     private Matrix mShaderMatrix = new Matrix();
+    private View mTarget;
 
     private Bitmap mTargetBitmap;
     private final Paint mPaint = new Paint();
-
-    private AnimationSetupCallback mCallback;
-
-    public interface AnimationSetupCallback {
-
-        void onSetupAnimation(SpotlightView spotlight);
-    }
 
     public SpotlightView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -43,8 +36,6 @@ public class SpotlightView extends View {
 
             int maskId = a.getResourceId(R.styleable.SpotlightView_mask, 0);
             mMask = convertToAlphaMask(BitmapFactory.decodeResource(getResources(), maskId));
-
-            android.util.Log.d("Spotlight", "c=" + mMask.getConfig());
         } catch (Exception e) {
             android.util.Log.e("Spotlight", "Error while creating the view:", e);
         } finally {
@@ -82,16 +73,11 @@ public class SpotlightView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        Log.e("TAG", "---------------start-------------------");
         float maskW = mMask.getWidth() / 2.0f;
         float maskH = mMask.getHeight() / 2.0f;
-        Log.e("TAG", "maskW = " + maskW);
-        Log.e("TAG", "maskH = " + maskH);
 
         float x = mMaskX - maskW * mMaskScale;
         float y = mMaskY - maskH * mMaskScale;
-        Log.e("TAG", "x = " + x);
-        Log.e("TAG", "y = " + y);
 
         mShaderMatrix.setScale(1.0f / mMaskScale, 1.0f / mMaskScale);
         mShaderMatrix.preTranslate(-x, -y);
@@ -103,10 +89,6 @@ public class SpotlightView extends View {
         canvas.drawBitmap(mMask, 0.0f, 0.0f, mPaint);
     }
 
-    public void setAnimationSetupCallback(AnimationSetupCallback callback) {
-        mCallback = callback;
-    }
-
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
@@ -115,19 +97,15 @@ public class SpotlightView extends View {
             @SuppressWarnings("deprecation")
             @Override
             public void onGlobalLayout() {
+                mTarget = getRootView().findViewById(mTargetId);
                 createShader();
-                if (mCallback != null) {
-                    mCallback.onSetupAnimation(SpotlightView.this);
-                }
-
                 getViewTreeObserver().removeGlobalOnLayoutListener(this);
             }
         });
     }
 
-    private void createShader() {
-        View target = getRootView().findViewById(mTargetId);
-        mTargetBitmap = createBitmap(target);
+    public void createShader() {
+        mTargetBitmap = createBitmap(mTarget);
         Shader targetShader = createShader(mTargetBitmap);
         mPaint.setShader(targetShader);
     }
@@ -152,7 +130,6 @@ public class SpotlightView extends View {
     }
 
     public float computeMaskScale(float d) {
-        // Let's assume the mask is square
         return d / (float) mMask.getHeight();
     }
 }

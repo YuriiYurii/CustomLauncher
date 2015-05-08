@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.ClipData;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
@@ -15,15 +16,13 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.TextView;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 
 public class MainActivity extends ActionBarActivity
-        implements View.OnClickListener, RecyclerViewAdapter.OnLongClickCallback {
+        implements View.OnClickListener, RecyclerViewAdapter.ClickCallbacks {
 
     private final Intent mMainIntent = new Intent(Intent.ACTION_MAIN, null)
             .addCategory(Intent.CATEGORY_LAUNCHER);
@@ -54,14 +53,15 @@ public class MainActivity extends ActionBarActivity
 
     @Override
     public void onClick(View v) {
-        Log.e("TAG", "onClick");
         mItemsShown = true;
+        mSpotlightView.createShader();
         mSpotlightView.setMaskX(mSpotlightView.getWidth() / 2.0f);
         mSpotlightView.setMaskY(mSpotlightView.getHeight() / 2.0f);
-
-        mMainPageItems.animate().alpha(0.0f).withLayer().withEndAction(new Runnable() {
+        findViewById(R.id.spot_view).setVisibility(View.VISIBLE);
+        mMenuLauncher.animate().alpha(0.0f).start();
+        mMainPageItems.animate().alpha(0.0f).setListener(new AnimatorListenerAdapter() {
             @Override
-            public void run() {
+            public void onAnimationEnd(Animator animation) {
                 final ObjectAnimator superScale = ObjectAnimator
                         .ofFloat(mSpotlightView, "maskScale",
                                 mSpotlightView.computeMaskScale(
@@ -70,7 +70,6 @@ public class MainActivity extends ActionBarActivity
                 superScale.setDuration(250);
                 AnimatorSet set = new AnimatorSet();
                 set.play(superScale);
-
                 set.start();
                 set.addListener(new AnimatorListenerAdapter() {
                     @Override
@@ -79,19 +78,16 @@ public class MainActivity extends ActionBarActivity
                         mMenuLauncher.setVisibility(View.INVISIBLE);
                         findViewById(R.id.spot_view).setVisibility(View.INVISIBLE);
                         findViewById(R.id.items_menu).setVisibility(View.VISIBLE);
-
                     }
                 });
             }
-        });
+        }).start();
     }
-
 
     @Override
     public void onBackPressed() {
         if (mItemsShown) {
-            hideMenu();
-            mItemsShown = false;
+            hideMenu(null);
         }
     }
 
@@ -99,63 +95,46 @@ public class MainActivity extends ActionBarActivity
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (mItemsShown) {
-            hideMenu();
-            mItemsShown = false;
+            hideMenu(null);
         }
     }
 
     @Override
     public void onItemLongClick(final View item) {
-        hideMenu();
-        final ClipData clipData = ClipData.newPlainText("descripion",
-                (CharSequence) ((TextView) item.findViewById(R.id.app_text)).getText());
-        final View.DragShadowBuilder dragShadowBuilder = new View.DragShadowBuilder(item);
-        mMainPageItems.animate().alpha(1.0f).setListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                mSpotlightView.setVisibility(View.VISIBLE);
-                findViewById(R.id.items_menu).setVisibility(View.INVISIBLE);
-                final ObjectAnimator superScale = ObjectAnimator
-                        .ofFloat(mSpotlightView, "maskScale",
-                                0.0f);
-                superScale.setDuration(250);
-                AnimatorSet set = new AnimatorSet();
-                Log.e("TAG", "entered");
-                set.play(superScale);
-                set.start();
-                set.addListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        mSpotlightView.setVisibility(View.INVISIBLE);
-                        findViewById(R.id.main_page_items).setVisibility(View.VISIBLE);
-                        mMenuLauncher.setVisibility(View.VISIBLE);
-                        item.startDrag(clipData, dragShadowBuilder, item, 0);
-                    }
-                });
-            }
-        });
+            hideMenu(item);
+    }
 
-
+    @Override
+    public void onItemClick(AppInfo info) {
+        ComponentName componentName = new ComponentName(info.getPackageName(), info.getClsName());
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        intent.setComponent(componentName);
+        startActivity(intent);
     }
 
     public List<AppInfo> getAppList() {
         List<AppInfo> appInfoList = new LinkedList<>();
-        mMainPageItemsDummy = new ArrayList<>(16);
-        int i = 0;
+        mMainPageItemsDummy = new LinkedList<>();
         for (ResolveInfo resolveInfo : MainActivity.this.getPackageManager()
                 .queryIntentActivities(mMainIntent, 0)) {
-            i++;
             appInfoList.add(new AppInfo()
                     .setIcon(resolveInfo.loadIcon(MainActivity.this.getPackageManager()))
-                    .setName(resolveInfo.loadLabel(MainActivity.this.getPackageManager())));
+                    .setLabel(resolveInfo.loadLabel(MainActivity.this.getPackageManager()))
+                    .setPackageName(resolveInfo.activityInfo.packageName)
+                    .setClsName(resolveInfo.activityInfo.name).setHolder(false));
             mMainPageItemsDummy.add(new AppInfo()
                     .setIcon(getResources().getDrawable(R.drawable.shape))
-                    .setName(""));
+                    .setLabel("").setHolder(true));
         }
         return appInfoList;
     }
 
-    private void hideMenu() {
+    private void hideMenu(final View view) {
+        mSpotlightView.createShader();
+        mMenuLauncher.animate().alpha(1.0f).start();
         mMainPageItems.animate().alpha(1.0f).setListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
@@ -175,6 +154,15 @@ public class MainActivity extends ActionBarActivity
                         mSpotlightView.setVisibility(View.INVISIBLE);
                         findViewById(R.id.main_page_items).setVisibility(View.VISIBLE);
                         mMenuLauncher.setVisibility(View.VISIBLE);
+                        mItemsShown = false;
+                        if (view != null) {
+                            AppInfo appInfo = (AppInfo) view.getTag(R.integer.APP_VIEW_KEY);
+                            final ClipData clipData = ClipData.newPlainText("label",
+                                    appInfo.getLabel());
+                            final View.DragShadowBuilder dragShadowBuilder
+                                    = new View.DragShadowBuilder(view);
+                            view.startDrag(clipData, dragShadowBuilder, view, 0);
+                        }
                     }
                 });
             }

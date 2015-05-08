@@ -17,12 +17,12 @@ import java.util.List;
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.AppHolder> {
 
     private List<AppInfo> mInstalledApps;
-    private OnLongClickCallback mOnLongClickCallback;
+    private ClickCallbacks mClickCallbacks;
 
     public RecyclerViewAdapter(List<AppInfo> installedApps,
-            OnLongClickCallback onLongClickCallback) {
+            ClickCallbacks ClickCallbacks) {
         mInstalledApps = installedApps;
-        mOnLongClickCallback = onLongClickCallback;
+        mClickCallbacks = ClickCallbacks;
     }
 
     @Override
@@ -34,7 +34,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     @Override
     public void onBindViewHolder(AppHolder holder, int position) {
         holder.mAppLogo.setImageDrawable(mInstalledApps.get(position).getIcon());
-        holder.mAppName.setText(mInstalledApps.get(position).getName());
+        holder.mAppName.setText(mInstalledApps.get(position).getLabel());
     }
 
     @Override
@@ -43,25 +43,25 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     }
 
     public class AppHolder extends RecyclerView.ViewHolder
-            implements View.OnLongClickListener,View.OnDragListener{
+            implements View.OnLongClickListener, View.OnDragListener, View.OnClickListener {
 
         private ImageView mAppLogo;
         private TextView mAppName;
-        private View mParent;
 
         public AppHolder(View itemView) {
             super(itemView);
 
-            mParent = itemView;
             mAppLogo = (ImageView) itemView.findViewById(R.id.app_icon_logo);
             mAppName = (TextView) itemView.findViewById(R.id.app_text);
             itemView.setOnLongClickListener(this);
             itemView.setOnDragListener(this);
+            itemView.setOnClickListener(this);
         }
 
         @Override
         public boolean onLongClick(View v) {
-            mOnLongClickCallback.onItemLongClick(v);
+            v.setTag(R.integer.APP_VIEW_KEY, mInstalledApps.get(getPosition()));
+            mClickCallbacks.onItemLongClick(v);
             return true;
         }
 
@@ -69,40 +69,46 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         public boolean onDrag(View v, DragEvent event) {
             switch (event.getAction()) {
                 case DragEvent.ACTION_DRAG_STARTED:
-                    Log.e("TAG", "ACTION_DRAG_STARTED");
                     break;
                 case DragEvent.ACTION_DRAG_ENTERED:
-                    Log.e("TAG", "ACTION_DRAG_ENTERED");
-                    mParent.setBackgroundResource(R.drawable.shape_drop_target);
-                    //no action necessary
+                    v.setBackgroundResource(R.drawable.shape_drop_target);
                     break;
                 case DragEvent.ACTION_DRAG_EXITED:
-                    Log.e("TAG", "ACTION_DRAG_EXITED");
-                    mParent.setBackgroundResource(R.drawable.shape);
-                    //no action necessary
+                    v.setBackgroundResource(R.drawable.shape);
                     break;
                 case DragEvent.ACTION_DROP:
                     View view = (View) event.getLocalState();
-                    mInstalledApps.set(getPosition(), new AppInfo().setIcon(
-                            ((ImageView) view.findViewById(R.id.app_icon_logo)).getDrawable())
-                            .setName(((TextView) view.findViewById(R.id.app_text)).getText()));
+                    if (mInstalledApps.get(getPosition())
+                            .equals(view.getTag(R.integer.APP_VIEW_KEY))) {
+                        break;
+                    }
+                    mInstalledApps.set(getPosition(), new AppInfo(
+                            (AppInfo) view.getTag(R.integer.APP_VIEW_KEY)));
                     notifyItemChanged(getPosition());
-                    Log.e("TAG", "ACTION_DROP");
+                    Log.e("TAG", "size = " + mInstalledApps.size());
                     break;
                 case DragEvent.ACTION_DRAG_ENDED:
-                    Log.e("TAG", "ACTION_DRAG_ENDED");
-                    mParent.setBackgroundResource(R.drawable.shape);
-                    //no action necessary
+                    v.setBackgroundResource(R.drawable.shape);
                     break;
                 default:
                     break;
             }
             return true;
         }
+
+        @Override
+        public void onClick(View v) {
+            if (!mInstalledApps.get(getPosition()).isHolder()) {
+                mClickCallbacks.onItemClick(mInstalledApps.get(getPosition()));
+            }
+        }
     }
 
-    public interface OnLongClickCallback {
+    public interface ClickCallbacks {
 
         void onItemLongClick(View item);
+
+        void onItemClick(AppInfo info);
     }
+
 }
