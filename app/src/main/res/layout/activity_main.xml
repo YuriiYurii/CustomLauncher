@@ -5,16 +5,23 @@
              android:layout_height="match_parent"
              android:background="@drawable/back"
              tools:context=".MainActivity">
+    <LinearLayout
+            android:id="@+id/dots_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+    </LinearLayout>
 
     <FrameLayout android:layout_width="match_parent"
                  android:layout_height="match_parent"
                  android:id="@+id/items_menu"
                  android:visibility="invisible">
-        <android.support.v7.widget.RecyclerView
-                android:id="@+id/recycler_view"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-        </android.support.v7.widget.RecyclerView>
+        <android.support.v4.view.ViewPager android:id="@+id/all_items_menu"
+                                           android:layout_width="match_parent"
+                                           android:layout_height="match_parent">
+
+        </android.support.v4.view.ViewPager>
 
 
     </FrameLayout>
@@ -22,13 +29,12 @@
     <LinearLayout android:layout_width="match_parent"
                   android:layout_height="match_parent"
                   android:orientation="vertical">
+        <android.support.v4.view.ViewPager android:id="@+id/desktop_items"
+                                           android:layout_weight="1"
+                                           android:layout_width="match_parent"
+                                           android:layout_height="match_parent">
 
-        <android.support.v7.widget.RecyclerView
-                android:layout_weight="1"
-                android:id="@+id/main_page_items"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-        </android.support.v7.widget.RecyclerView>
+        </android.support.v4.view.ViewPager>
 
         <ImageView android:id="@+id/menu_popup_launcher"
                    android:layout_gravity="bottom|center"
@@ -40,7 +46,7 @@
             android:id="@+id/spot_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            s:target="@id/recycler_view"
+            s:target="@id/all_items_menu"
             s:mask="@drawable/spot_mask"/>
 
 

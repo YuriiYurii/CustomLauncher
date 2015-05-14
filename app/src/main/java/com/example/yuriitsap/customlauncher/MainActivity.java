@@ -8,14 +8,19 @@ import android.content.ClipData;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -27,10 +32,12 @@ public class MainActivity extends ActionBarActivity
     private final Intent mMainIntent = new Intent(Intent.ACTION_MAIN, null)
             .addCategory(Intent.CATEGORY_LAUNCHER);
     private ImageView mMenuLauncher;
-    private RecyclerView mMenuItems, mMainPageItems;
     private boolean mItemsShown = false;
     private SpotlightView mSpotlightView;
     private List<AppInfo> mMainPageItemsDummy;
+    private Button[] mDots;
+    private LinearLayout mDotsLayout;
+    private ViewPager mDesktopItems, mMenuItems;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,14 +47,16 @@ public class MainActivity extends ActionBarActivity
         getAppList();
         mMenuLauncher = (ImageView) findViewById(R.id.menu_popup_launcher);
         mMenuLauncher.setOnClickListener(this);
-        mMainPageItems = (RecyclerView) findViewById(R.id.main_page_items);
-        mMainPageItems.setAdapter(new RecyclerViewAdapter(mMainPageItemsDummy, this));
-        mMainPageItems.setLayoutManager(new GridLayoutManager(MainActivity.this, 4,
-                LinearLayoutManager.HORIZONTAL, false));
-        mMenuItems = (RecyclerView) findViewById(R.id.recycler_view);
-        mMenuItems.setAdapter(new RecyclerViewAdapter(getAppList(), this));
-        mMenuItems.setLayoutManager(new GridLayoutManager(MainActivity.this, 4,
-                LinearLayoutManager.HORIZONTAL, false));
+        mDotsLayout = (LinearLayout) findViewById(R.id.dots_layout);
+        mDesktopItems = (ViewPager) findViewById(R.id.desktop_items);
+        mDesktopItems.setAdapter(new MenuPagerAdapter(getSupportFragmentManager()));
+        mDesktopItems.setOnPageChangeListener(new PageStateListener());
+        initDots();
+        for (Button button : mDots) {
+            mDotsLayout.addView(button);
+        }
+        mDesktopItems.setAdapter(new MenuPagerAdapter(getSupportFragmentManager()));
+        mMenuItems = (ViewPager) findViewById(R.id.all_items_menu);
         mSpotlightView = (SpotlightView) findViewById(R.id.spot_view);
     }
 
@@ -55,18 +64,18 @@ public class MainActivity extends ActionBarActivity
     public void onClick(View v) {
         mItemsShown = true;
         mSpotlightView.createShader();
-        mSpotlightView.setMaskX(mSpotlightView.getWidth() / 2.0f);
-        mSpotlightView.setMaskY(mSpotlightView.getHeight() / 2.0f);
+        mSpotlightView.setMaskX(v.getLeft());
+        mSpotlightView.setMaskY(v.getBottom());
         findViewById(R.id.spot_view).setVisibility(View.VISIBLE);
         mMenuLauncher.animate().alpha(0.0f).start();
-        mMainPageItems.animate().alpha(0.0f).setListener(new AnimatorListenerAdapter() {
+        mDesktopItems.animate().alpha(0.0f).setListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
                 final ObjectAnimator superScale = ObjectAnimator
                         .ofFloat(mSpotlightView, "maskScale",
                                 mSpotlightView.computeMaskScale(
                                         Math.max(mSpotlightView.getHeight(),
-                                                mSpotlightView.getWidth()) * 1.7f));
+                                                mSpotlightView.getWidth()) * 2.7f));
                 superScale.setDuration(250);
                 AnimatorSet set = new AnimatorSet();
                 set.play(superScale);
@@ -74,7 +83,7 @@ public class MainActivity extends ActionBarActivity
                 set.addListener(new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
-                        mMainPageItems.setVisibility(View.INVISIBLE);
+                        mDesktopItems.setVisibility(View.INVISIBLE);
                         mMenuLauncher.setVisibility(View.INVISIBLE);
                         findViewById(R.id.spot_view).setVisibility(View.INVISIBLE);
                         findViewById(R.id.items_menu).setVisibility(View.VISIBLE);
@@ -99,9 +108,20 @@ public class MainActivity extends ActionBarActivity
         }
     }
 
+    public void initDots() {
+        mDots = new Button[mDesktopItems.getAdapter().getCount()];
+        for (int i = mDesktopItems.getAdapter().getCount() - 1; i >= 0; i--) {
+            mDots[i] = new Button(this);
+            mDots[i].setBackground(getResources().getDrawable(R.drawable.rounded_cell));
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(25, 25);
+            layoutParams.setMargins(3, 3, 3, 3);
+            mDots[i].setLayoutParams(layoutParams);
+        }
+    }
+
     @Override
     public void onItemLongClick(final View item) {
-            hideMenu(item);
+        hideMenu(item);
     }
 
     @Override
@@ -135,7 +155,7 @@ public class MainActivity extends ActionBarActivity
     private void hideMenu(final View view) {
         mSpotlightView.createShader();
         mMenuLauncher.animate().alpha(1.0f).start();
-        mMainPageItems.animate().alpha(1.0f).setListener(new AnimatorListenerAdapter() {
+        mDesktopItems.animate().alpha(1.0f).setListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
                 mSpotlightView.setVisibility(View.VISIBLE);
@@ -152,7 +172,7 @@ public class MainActivity extends ActionBarActivity
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         mSpotlightView.setVisibility(View.INVISIBLE);
-                        findViewById(R.id.main_page_items).setVisibility(View.VISIBLE);
+                        findViewById(R.id.desktop_items).setVisibility(View.VISIBLE);
                         mMenuLauncher.setVisibility(View.VISIBLE);
                         mItemsShown = false;
                         if (view != null) {
@@ -167,5 +187,38 @@ public class MainActivity extends ActionBarActivity
                 });
             }
         });
+    }
+
+    private class MenuPagerAdapter extends FragmentStatePagerAdapter {
+
+        public MenuPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return PageFragment.newInstance();
+        }
+
+        @Override
+        public int getCount() {
+            return 6;
+        }
+    }
+
+    private class PageStateListener extends ViewPager.SimpleOnPageChangeListener {
+
+        @Override
+        public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            mDots[position].getBackground()
+                    .setColorFilter(Color.rgb((int) (255 * positionOffset),
+                                    (int) (255 * positionOffset), (int) (255 * positionOffset)),
+                            PorterDuff.Mode.MULTIPLY);
+            mDots[position == mDots.length - 1 ? position - 1 : position + 1].getBackground()
+                    .setColorFilter(Color.rgb((int) (255 - 255 * positionOffset),
+                                    (int) (255 - 255 * positionOffset),
+                                    (int) (255 - 255 * positionOffset)),
+                            PorterDuff.Mode.MULTIPLY);
+        }
     }
 }
