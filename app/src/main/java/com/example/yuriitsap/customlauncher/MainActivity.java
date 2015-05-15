@@ -36,6 +36,7 @@ public class MainActivity extends ActionBarActivity
     private SpotlightView mSpotlightView;
     private List<AppInfo> mMainPageItemsDummy;
     private Button[] mDots;
+    private int mMatrixDimension[] = {3, 3};
     private LinearLayout mDotsLayout;
     private ViewPager mDesktopItems, mMenuItems;
 
@@ -197,8 +198,10 @@ public class MainActivity extends ActionBarActivity
 
         @Override
         public Fragment getItem(int position) {
-            return PageFragment.newInstance();
+            int[] y = {3, 3};
+            return PageFragment.newInstance(y);
         }
+
 
         @Override
         public int getCount() {
