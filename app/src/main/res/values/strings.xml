@@ -6,4 +6,8 @@
     <string name="title_activity_main_activity2">MainActivity2</string>
     <string name="title_activity_main_activity3">MainActivity3Activity</string>
     <string name="title_activity_settings">SettingsActivity</string>
+    <string name="page_width">PAGE_WIDTH</string>
+    <string name="page_height">PAGE_HEIGHT</string>
+    <string name="preference_file_name">LAUNCHER_PREFERENCE</string>
+    <string name="resolutions_saved">RESOLUTIONS_SAVED</string>
 </resources>

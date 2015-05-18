@@ -7,6 +7,7 @@ import android.animation.ObjectAnimator;
 import android.content.ClipData;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -18,6 +19,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -39,6 +41,8 @@ public class MainActivity extends ActionBarActivity
     private int mMatrixDimension[] = {3, 3};
     private LinearLayout mDotsLayout;
     private ViewPager mDesktopItems, mMenuItems;
+    private boolean mResolutionsSaved = false;
+    private int mPageResolution[] = new int[2];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +60,36 @@ public class MainActivity extends ActionBarActivity
         for (Button button : mDots) {
             mDotsLayout.addView(button);
         }
-        mDesktopItems.setAdapter(new MenuPagerAdapter(getSupportFragmentManager()));
+        if (!this.getSharedPreferences(getString(R.string.preference_file_name), MODE_PRIVATE)
+                .getBoolean(getString(R.string.resolutions_saved), false)) {
+            mDesktopItems.getViewTreeObserver().addOnPreDrawListener(
+                    new ViewTreeObserver.OnPreDrawListener() {
+                        @Override
+                        public boolean onPreDraw() {
+                            mDesktopItems.getViewTreeObserver().removeOnPreDrawListener(this);
+                            SharedPreferences.Editor editor = MainActivity.this
+                                    .getSharedPreferences(getString(R.string.preference_file_name),
+                                            MODE_PRIVATE).edit();
+                            editor.putInt(getString(R.string.page_width), mDesktopItems.getWidth());
+                            editor.putInt(getString(R.string.page_height),
+                                    mDesktopItems.getHeight());
+                            editor.putBoolean(getString(R.string.resolutions_saved), true);
+                            editor.commit();
+                            mResolutionsSaved = true;
+                            return true;
+                        }
+                    });
+
+        } else {
+            mPageResolution[0] = this
+                    .getSharedPreferences(getString(R.string.preference_file_name), MODE_PRIVATE)
+                    .getInt(getString(R.string.page_width), 0);
+            mPageResolution[1] = this
+                    .getSharedPreferences(getString(R.string.preference_file_name), MODE_PRIVATE)
+                    .getInt(getString(R.string.page_height), 0);
+
+
+        }
         mMenuItems = (ViewPager) findViewById(R.id.all_items_menu);
         mSpotlightView = (SpotlightView) findViewById(R.id.spot_view);
     }
@@ -192,14 +225,16 @@ public class MainActivity extends ActionBarActivity
 
     private class MenuPagerAdapter extends FragmentStatePagerAdapter {
 
+
         public MenuPagerAdapter(FragmentManager fm) {
             super(fm);
         }
 
+
         @Override
         public Fragment getItem(int position) {
             int[] y = {3, 3};
-            return PageFragment.newInstance(y);
+            return PageFragment.newInstance(y, mPageResolution);
         }
 
 

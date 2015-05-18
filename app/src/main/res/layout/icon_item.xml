@@ -4,8 +4,8 @@
               android:layout_weight="1"
               android:padding="7dp"
               android:layout_gravity="center"
-              android:layout_width="50dp"
-              android:layout_height="50dp">
+              android:layout_width="100dp"
+              android:layout_height="100dp">
 
     <ImageView android:id="@+id/app_icon_logo"
                android:src="@drawable/box_xx"
@@ -14,6 +14,7 @@
     <TextView android:id="@+id/app_text"
               android:maxEms="6"
               android:singleLine="true"
+              android:text="TEXT"
               android:layout_width="match_parent"
               android:layout_height="match_parent"/>
 </LinearLayout>

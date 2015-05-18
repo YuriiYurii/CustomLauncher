@@ -16,13 +16,16 @@ import android.widget.LinearLayout;
 public class PageFragment extends Fragment {
 
     private static final String MATRIX_DEMENSION_KEY = "MATRIX_DEMENSION";
+    private static final String PAGE_RESOLUTION_KEY = "PAGE_RESOLUTION";
     private LinearLayout mIconHolder;
     private int mMatrixDimension[] = new int[2];
+    private int mScreenResolution[] = new int[2];
 
-    public static PageFragment newInstance(int[] matrixDimension) {
+    public static PageFragment newInstance(int[] matrixDimension, int[] pageResolution) {
         Bundle args = new Bundle();
         PageFragment pageFragment = new PageFragment();
         args.putIntArray(MATRIX_DEMENSION_KEY, matrixDimension);
+        args.putIntArray(PAGE_RESOLUTION_KEY, pageResolution);
         pageFragment.setArguments(args);
         return pageFragment;
     }
@@ -37,29 +40,15 @@ public class PageFragment extends Fragment {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        int[] matrix = getArguments().getIntArray(MATRIX_DEMENSION_KEY);
-        ((GridLayout) view).setRowCount(4);
-
-        for (int i = 10; i >= 0; i--) {
-
-            GridLayout.Spec row1 = GridLayout.spec(1);
-            GridLayout.Spec col0 = GridLayout.spec(1);
-            GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams(row1, col0);
+        mMatrixDimension = getArguments().getIntArray(MATRIX_DEMENSION_KEY);
+        mScreenResolution = getArguments().getIntArray(PAGE_RESOLUTION_KEY);
+        ((GridLayout) view).setRowCount(mMatrixDimension[0]);
+        ((GridLayout) view).setColumnCount(mMatrixDimension[1]);
+        for (int i = mMatrixDimension[0] * mMatrixDimension[1] - 1; i >= 0; i--) {
             ((GridLayout) view).addView(LayoutInflater.from(view.getContext())
-                    .inflate(R.layout.icon_item, (GridLayout) view, false));
+                    .inflate(R.layout.icon_item, (ViewGroup) view, false));
         }
+
     }
-//        int[] matrix = getArguments().getIntArray(MATRIX_DEMENSION_KEY);
-//        for (int i = matrix[0]; i > 0; i--) {
-//            LinearLayout linearLayout = new LinearLayout(view.getContext());
-//            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-//                    ViewGroup.LayoutParams.MATCH_PARENT,
-//                    0, 1.0f);
-//            linearLayout.setLayoutParams(layoutParams);
-//            for (int j = matrix[1]; j > 0; j--) {
-//                linearLayout.addView(LayoutInflater.from(view.getContext()).inflate(
-//                        R.layout.icon_item, linearLayout, false));
-//            }
-//            ((LinearLayout) view).addView(linearLayout);
 }
 
