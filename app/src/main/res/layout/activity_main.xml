@@ -1,10 +1,11 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:tools="http://schemas.android.com/tools"
-             xmlns:s="http://schemas.android.com/apk/res-auto"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-             android:background="@drawable/back"
-             tools:context=".MainActivity">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              xmlns:s="http://schemas.android.com/apk/res-auto"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              android:background="@drawable/back"
+              tools:context=".MainActivity">
     <LinearLayout
             android:id="@+id/dots_layout"
             android:layout_width="match_parent"
@@ -13,41 +14,46 @@
             android:orientation="horizontal">
     </LinearLayout>
 
-    <FrameLayout android:layout_width="match_parent"
-                 android:layout_height="match_parent"
-                 android:id="@+id/items_menu"
-                 android:visibility="invisible">
-        <android.support.v4.view.ViewPager android:id="@+id/all_items_menu"
-                                           android:layout_width="match_parent"
-                                           android:layout_height="match_parent">
+    <FrameLayout android:layout_weight="1"
+                 android:layout_width="match_parent"
+                 android:layout_height="match_parent">
+        <FrameLayout android:layout_width="match_parent"
+                     android:layout_height="match_parent"
+                     android:id="@+id/items_menu"
+                     android:visibility="invisible">
+            <android.support.v4.view.ViewPager android:id="@+id/all_items_menu"
+                                               android:layout_width="match_parent"
+                                               android:layout_height="match_parent">
 
-        </android.support.v4.view.ViewPager>
+            </android.support.v4.view.ViewPager>
 
+
+        </FrameLayout>
+
+        <LinearLayout android:layout_width="match_parent"
+                      android:layout_height="match_parent"
+                      android:orientation="vertical">
+            <android.support.v4.view.ViewPager android:id="@+id/desktop_items"
+                                               android:layout_weight="1"
+                                               android:layout_width="match_parent"
+                                               android:layout_height="match_parent">
+
+            </android.support.v4.view.ViewPager>
+
+            <ImageView android:id="@+id/menu_popup_launcher"
+                       android:layout_gravity="bottom|center"
+                       android:src="@drawable/ic_launcher"
+                       android:layout_width="wrap_content"
+                       android:layout_height="wrap_content"/>
+        </LinearLayout>
+        <com.example.yuriitsap.customlauncher.SpotlightView
+                android:id="@+id/spot_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                s:target="@id/all_items_menu"
+                s:mask="@drawable/spot_mask"/>
 
     </FrameLayout>
 
-    <LinearLayout android:layout_width="match_parent"
-                  android:layout_height="match_parent"
-                  android:orientation="vertical">
-        <android.support.v4.view.ViewPager android:id="@+id/desktop_items"
-                                           android:layout_weight="1"
-                                           android:layout_width="match_parent"
-                                           android:layout_height="match_parent">
 
-        </android.support.v4.view.ViewPager>
-
-        <ImageView android:id="@+id/menu_popup_launcher"
-                   android:layout_gravity="bottom|center"
-                   android:src="@drawable/ic_launcher"
-                   android:layout_width="wrap_content"
-                   android:layout_height="wrap_content"/>
-    </LinearLayout>
-    <com.example.yuriitsap.customlauncher.SpotlightView
-            android:id="@+id/spot_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            s:target="@id/all_items_menu"
-            s:mask="@drawable/spot_mask"/>
-
-
-</FrameLayout>
+</LinearLayout>

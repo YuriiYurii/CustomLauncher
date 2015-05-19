@@ -1,24 +1,30 @@
 package com.example.yuriitsap.customlauncher;
 
-import android.graphics.drawable.Drawable;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 /**
  * Created by yuriitsap on 29.04.15.
  */
-public class AppInfo {
+public class AppInfo implements Parcelable {
 
     private CharSequence mLabel;
-    private Drawable mIcon;
     private String mPackageName;
     private String mClsName;
     private boolean mHolder;
 
     public AppInfo(AppInfo app) {
         mLabel = app.getLabel();
-        mIcon = app.getIcon();
         mPackageName = app.getPackageName();
         mClsName = app.getClsName();
         mHolder = app.isHolder();
+    }
+
+    public AppInfo(Parcel source) {
+        mLabel = source.readString();
+        mPackageName = source.readString();
+        mClsName = source.readString();
+        mHolder = source.readByte() != 0;
     }
 
     public AppInfo() {
@@ -33,14 +39,6 @@ public class AppInfo {
         return this;
     }
 
-    public Drawable getIcon() {
-        return mIcon;
-    }
-
-    public AppInfo setIcon(Drawable icon) {
-        mIcon = icon;
-        return this;
-    }
 
     public String getPackageName() {
         return mPackageName;
@@ -86,9 +84,6 @@ public class AppInfo {
         if (mLabel != null ? !mLabel.equals(appInfo.mLabel) : appInfo.mLabel != null) {
             return false;
         }
-        if (mIcon != null ? !mIcon.equals(appInfo.mIcon) : appInfo.mIcon != null) {
-            return false;
-        }
         if (mPackageName != null ? !mPackageName.equals(appInfo.mPackageName)
                 : appInfo.mPackageName != null) {
             return false;
@@ -100,10 +95,34 @@ public class AppInfo {
     @Override
     public int hashCode() {
         int result = mLabel != null ? mLabel.hashCode() : 0;
-        result = 31 * result + (mIcon != null ? mIcon.hashCode() : 0);
         result = 31 * result + (mPackageName != null ? mPackageName.hashCode() : 0);
         result = 31 * result + (mClsName != null ? mClsName.hashCode() : 0);
         result = 31 * result + (mHolder ? 1 : 0);
         return result;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(mLabel.toString());
+        dest.writeString(mPackageName);
+        dest.writeString(mClsName);
+        dest.writeByte((byte) (mHolder ? 1 : 0));
+    }
+
+    public static final Creator<AppInfo> APP_INFO_CREATOR = new Creator<AppInfo>() {
+        @Override
+        public AppInfo createFromParcel(Parcel source) {
+            return new AppInfo(source);
+        }
+
+        @Override
+        public AppInfo[] newArray(int size) {
+            return new AppInfo[size];
+        }
+    };
 }

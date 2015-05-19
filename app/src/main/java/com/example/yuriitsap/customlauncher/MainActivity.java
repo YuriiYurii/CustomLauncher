@@ -9,8 +9,10 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -24,8 +26,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.ArrayList;
 
 
 public class MainActivity extends ActionBarActivity
@@ -36,7 +37,7 @@ public class MainActivity extends ActionBarActivity
     private ImageView mMenuLauncher;
     private boolean mItemsShown = false;
     private SpotlightView mSpotlightView;
-    private List<AppInfo> mMainPageItemsDummy;
+    private ArrayList<AppInfo> mMainPageItemsDummy, mInstalledApps;
     private Button[] mDots;
     private int mMatrixDimension[] = {3, 3};
     private LinearLayout mDotsLayout;
@@ -49,7 +50,7 @@ public class MainActivity extends ActionBarActivity
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-        getAppList();
+        initAppList();
         mMenuLauncher = (ImageView) findViewById(R.id.menu_popup_launcher);
         mMenuLauncher.setOnClickListener(this);
         mDotsLayout = (LinearLayout) findViewById(R.id.dots_layout);
@@ -169,21 +170,18 @@ public class MainActivity extends ActionBarActivity
         startActivity(intent);
     }
 
-    public List<AppInfo> getAppList() {
-        List<AppInfo> appInfoList = new LinkedList<>();
-        mMainPageItemsDummy = new LinkedList<>();
+    public void initAppList() {
+        mMainPageItemsDummy = new ArrayList<>();
+        mInstalledApps = new ArrayList<>();
         for (ResolveInfo resolveInfo : MainActivity.this.getPackageManager()
                 .queryIntentActivities(mMainIntent, 0)) {
-            appInfoList.add(new AppInfo()
-                    .setIcon(resolveInfo.loadIcon(MainActivity.this.getPackageManager()))
+            Bitmap bitmap = ((BitmapDrawable) resolveInfo.loadIcon(getPackageManager()))
+                    .getBitmap();
+            mInstalledApps.add(new AppInfo()
                     .setLabel(resolveInfo.loadLabel(MainActivity.this.getPackageManager()))
                     .setPackageName(resolveInfo.activityInfo.packageName)
                     .setClsName(resolveInfo.activityInfo.name).setHolder(false));
-            mMainPageItemsDummy.add(new AppInfo()
-                    .setIcon(getResources().getDrawable(R.drawable.shape))
-                    .setLabel("").setHolder(true));
         }
-        return appInfoList;
     }
 
     private void hideMenu(final View view) {
@@ -234,7 +232,7 @@ public class MainActivity extends ActionBarActivity
         @Override
         public Fragment getItem(int position) {
             int[] y = {3, 3};
-            return PageFragment.newInstance(y, mPageResolution);
+            return PageFragment.newInstance(y, mPageResolution, mInstalledApps, position + 1);
         }
 
 
