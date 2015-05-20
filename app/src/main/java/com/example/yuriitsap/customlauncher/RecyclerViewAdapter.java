@@ -97,9 +97,9 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
         @Override
         public void onClick(View v) {
-            if (!mInstalledApps.get(getPosition()).isHolder()) {
-                mClickCallbacks.onItemClick(mInstalledApps.get(getPosition()));
-            }
+//            if (!mInstalledApps.get(getPosition()).isHolder()) {
+//                mClickCallbacks.onItemClick(mInstalledApps.get(getPosition()));
+//            }
         }
     }
 

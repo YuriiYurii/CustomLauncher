@@ -28,22 +28,28 @@ import android.widget.LinearLayout;
 
 import java.util.ArrayList;
 
+import io.realm.Realm;
+
 
 public class MainActivity extends ActionBarActivity
         implements View.OnClickListener, RecyclerViewAdapter.ClickCallbacks {
 
     private final Intent mMainIntent = new Intent(Intent.ACTION_MAIN, null)
             .addCategory(Intent.CATEGORY_LAUNCHER);
+    private static final int DEFAULT_PAGES_COUNT = 3;
+    private static final int DEFAULT_ROWS_COUNT = 3;
+    private static final int DEFAULT_CILUMNS_COUNT = 3;
     private ImageView mMenuLauncher;
     private boolean mItemsShown = false;
     private SpotlightView mSpotlightView;
     private ArrayList<AppInfo> mMainPageItemsDummy, mInstalledApps;
     private Button[] mDots;
-    private int mMatrixDimension[] = {3, 3};
+    private int mMatrixDimension[];
     private LinearLayout mDotsLayout;
     private ViewPager mDesktopItems, mMenuItems;
     private boolean mResolutionsSaved = false;
     private int mPageResolution[] = new int[2];
+    private int mPagesCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,42 +64,15 @@ public class MainActivity extends ActionBarActivity
         mDesktopItems.setAdapter(new MenuPagerAdapter(getSupportFragmentManager()));
         mDesktopItems.setOnPageChangeListener(new PageStateListener());
         initDots();
+        initLauncherDimensions();
         for (Button button : mDots) {
             mDotsLayout.addView(button);
         }
-        if (!this.getSharedPreferences(getString(R.string.preference_file_name), MODE_PRIVATE)
-                .getBoolean(getString(R.string.resolutions_saved), false)) {
-            mDesktopItems.getViewTreeObserver().addOnPreDrawListener(
-                    new ViewTreeObserver.OnPreDrawListener() {
-                        @Override
-                        public boolean onPreDraw() {
-                            mDesktopItems.getViewTreeObserver().removeOnPreDrawListener(this);
-                            SharedPreferences.Editor editor = MainActivity.this
-                                    .getSharedPreferences(getString(R.string.preference_file_name),
-                                            MODE_PRIVATE).edit();
-                            editor.putInt(getString(R.string.page_width), mDesktopItems.getWidth());
-                            editor.putInt(getString(R.string.page_height),
-                                    mDesktopItems.getHeight());
-                            editor.putBoolean(getString(R.string.resolutions_saved), true);
-                            editor.commit();
-                            mResolutionsSaved = true;
-                            return true;
-                        }
-                    });
 
-        } else {
-            mPageResolution[0] = this
-                    .getSharedPreferences(getString(R.string.preference_file_name), MODE_PRIVATE)
-                    .getInt(getString(R.string.page_width), 0);
-            mPageResolution[1] = this
-                    .getSharedPreferences(getString(R.string.preference_file_name), MODE_PRIVATE)
-                    .getInt(getString(R.string.page_height), 0);
-
-
-        }
         mMenuItems = (ViewPager) findViewById(R.id.all_items_menu);
         mSpotlightView = (SpotlightView) findViewById(R.id.spot_view);
     }
+
 
     @Override
     public void onClick(View v) {
@@ -170,6 +149,40 @@ public class MainActivity extends ActionBarActivity
         startActivity(intent);
     }
 
+    private void initLauncherDimensions() {
+        if (!this.getSharedPreferences(getString(R.string.preference_file_name), MODE_PRIVATE)
+                .getBoolean(getString(R.string.resolutions_saved), false)) {
+            mDesktopItems.getViewTreeObserver().addOnPreDrawListener(
+                    new ViewTreeObserver.OnPreDrawListener() {
+                        @Override
+                        public boolean onPreDraw() {
+                            mDesktopItems.getViewTreeObserver().removeOnPreDrawListener(this);
+                            SharedPreferences.Editor editor = MainActivity.this
+                                    .getSharedPreferences(getString(R.string.preference_file_name),
+                                            MODE_PRIVATE).edit();
+                            editor.putInt(getString(R.string.page_width), mDesktopItems.getWidth());
+                            editor.putInt(getString(R.string.page_height),
+                                    mDesktopItems.getHeight());
+                            editor.putBoolean(getString(R.string.resolutions_saved), true);
+                            editor.commit();
+                            mResolutionsSaved = true;
+                            return true;
+                        }
+                    });
+
+        } else {
+            mPageResolution[0] = this
+                    .getSharedPreferences(getString(R.string.preference_file_name), MODE_PRIVATE)
+                    .getInt(getString(R.string.page_width), 0);
+            mPageResolution[1] = this
+                    .getSharedPreferences(getString(R.string.preference_file_name), MODE_PRIVATE)
+                    .getInt(getString(R.string.page_height), 0);
+
+
+        }
+
+    }
+
     public void initAppList() {
         mMainPageItemsDummy = new ArrayList<>();
         mInstalledApps = new ArrayList<>();
@@ -177,10 +190,13 @@ public class MainActivity extends ActionBarActivity
                 .queryIntentActivities(mMainIntent, 0)) {
             Bitmap bitmap = ((BitmapDrawable) resolveInfo.loadIcon(getPackageManager()))
                     .getBitmap();
-            mInstalledApps.add(new AppInfo()
-                    .setLabel(resolveInfo.loadLabel(MainActivity.this.getPackageManager()))
-                    .setPackageName(resolveInfo.activityInfo.packageName)
-                    .setClsName(resolveInfo.activityInfo.name).setHolder(false));
+            AppInfo appInfo = new AppInfo();
+            appInfo.setLabel(
+                    resolveInfo.loadLabel(MainActivity.this.getPackageManager()).toString());
+            appInfo.setPackageName(resolveInfo.activityInfo.packageName);
+            appInfo.setClsName(resolveInfo.activityInfo.name);
+            mInstalledApps.add(appInfo);
+
         }
     }
 
@@ -221,6 +237,10 @@ public class MainActivity extends ActionBarActivity
         });
     }
 
+    private void saveAppItems() {
+        Realm realm = Realm.getInstance(this);
+    }
+
     private class MenuPagerAdapter extends FragmentStatePagerAdapter {
 
 
@@ -231,7 +251,7 @@ public class MainActivity extends ActionBarActivity
 
         @Override
         public Fragment getItem(int position) {
-            int[] y = {3, 3};
+            int[] y = {4, 4};
             return PageFragment.newInstance(y, mPageResolution, mInstalledApps, position + 1);
         }
 
