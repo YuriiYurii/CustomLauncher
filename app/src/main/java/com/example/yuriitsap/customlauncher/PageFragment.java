@@ -6,43 +6,36 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.view.GestureDetector;
+import android.view.DragEvent;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.GridLayout;
+import android.widget.AdapterView;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
-
-import java.util.ArrayList;
 
 /**
  * Created by yuriitsap on 14.05.15.
  */
 public class PageFragment extends Fragment
-        implements View.OnTouchListener, View.OnClickListener {
+        implements View.OnDragListener, AdapterView.OnItemLongClickListener,
+        AdapterView.OnItemClickListener, View.OnLongClickListener {
 
     private static final String MATRIX_DEMENSION_KEY = "MATRIX_DEMENSION";
     private static final String PAGE_RESOLUTION_KEY = "PAGE_RESOLUTION";
-    private static final String PAGE_POSITION = "PAGE_POSITION";
-    private LinearLayout mIconHolder;
-    private static ArrayList<AppInfo> mApps;
     private int mMatrixDimension[] = new int[2];
     private int mScreenResolution[] = new int[2];
-    private GestureDetector mGestureDetector = new GestureDetector(new WallpaperGestureListener());
+    private ClickCallbacks mClickCallbacks;
+    private Page mPage;
 
-    public static PageFragment newInstance(int[] matrixDimension, int[] pageResolution,
-            ArrayList<AppInfo> pageItems, int page) {
+    public static PageFragment newInstance(int[] matrixDimension, int[] pageResolution) {
         Bundle args = new Bundle();
         PageFragment pageFragment = new PageFragment();
         args.putIntArray(MATRIX_DEMENSION_KEY, matrixDimension);
         args.putIntArray(PAGE_RESOLUTION_KEY, pageResolution);
-        mApps = pageItems;
-        args.putInt(PAGE_POSITION, page);
         pageFragment.setArguments(args);
-
         return pageFragment;
     }
 
@@ -56,66 +49,109 @@ public class PageFragment extends Fragment
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        view.setOnTouchListener(this);
-
         mMatrixDimension = getArguments().getIntArray(MATRIX_DEMENSION_KEY);
         mScreenResolution = getArguments().getIntArray(PAGE_RESOLUTION_KEY);
-        int page = getArguments().getInt(PAGE_POSITION);
-        int items = mMatrixDimension[0] * mMatrixDimension[1];
-        ((GridLayout) view).setRowCount(mMatrixDimension[1]);
-        ((GridLayout) view).setColumnCount(mMatrixDimension[0]);
+        ((GridView) view).setNumColumns(mMatrixDimension[0]);
+        ((GridView) view).setAdapter(new DesktopAdapter());
+        ((GridView) view).setOnItemClickListener(this);
+        ((GridView) view).setOnItemLongClickListener(this);
 
-        for (int i = items * page - 1; i >= (items * page) - items; i--) {
-            GridLayout.Spec rowSpec = GridLayout
-                    .spec((i % (items)) / mMatrixDimension[0]);
-            Log.e("TAG", "i = " + i);
-            GridLayout.Spec columnSpec = GridLayout.spec(i % mMatrixDimension[1]);
-            GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams(rowSpec, columnSpec);
-            layoutParams.height = mScreenResolution[1] / mMatrixDimension[1];
-            layoutParams.width = mScreenResolution[0] / mMatrixDimension[0];
-            View appHolder = LayoutInflater.from(view.getContext())
-                    .inflate(R.layout.icon_item, (ViewGroup) view, false);
-            appHolder.findViewById(R.id.app_icon_logo).setOnClickListener(this);
+    }
+
+
+    @Override
+    public boolean onDrag(View v, DragEvent event) {
+        return false;
+    }
+
+    public PageFragment setCallbacks(ClickCallbacks callbacks) {
+        mClickCallbacks = callbacks;
+        return this;
+    }
+
+    public PageFragment setPage(Page page) {
+        mPage = page;
+        return this;
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        view.setTag(R.integer.APP_VIEW_KEY, mPage.getApps().get(position));
+        mClickCallbacks.singleClick(view);
+
+    }
+
+    @Override
+    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        view.setTag(R.integer.APP_VIEW_KEY, mPage.getApps().get(position));
+        mClickCallbacks.longClick(view);
+        return true;
+    }
+
+    @Override
+    public boolean onLongClick(View v) {
+        Log.e("TAG", "onLongClick");
+        return true;
+    }
+
+    public interface ClickCallbacks {
+
+        boolean longClick(View view);
+
+        void singleClick(View view);
+    }
+
+    private class DesktopAdapter extends BaseAdapter {
+
+
+        @Override
+        public int getCount() {
+            return mPage.getApps().size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return mPage.getApps().get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return mPage.getApps().get(position).getId();
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            Holder holder = null;
+            if (convertView == null) {
+                convertView = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.icon_item, parent, false);
+                holder = new Holder();
+                holder.mTextView = (TextView) convertView.findViewById(R.id.app_text);
+                holder.mImageView = (ImageView) convertView.findViewById(R.id.app_icon_logo);
+                ViewGroup.LayoutParams layoutParams = convertView.getLayoutParams();
+                layoutParams.width = mScreenResolution[0] / mMatrixDimension[0];
+                layoutParams.height = mScreenResolution[1] / mMatrixDimension[1];
+                convertView.setTag(holder);
+            } else {
+                holder = (Holder) convertView.getTag();
+            }
             try {
-                ((ImageView) appHolder.findViewById(R.id.app_icon_logo)).setImageDrawable(
-                        getActivity().getPackageManager()
-                                .getApplicationIcon(mApps.get(i).getPackageName()));
+                holder.mTextView.setText(mPage.getApps().get(position).getLabel());
+                holder.mImageView.setImageDrawable(getActivity().getPackageManager()
+                        .getApplicationIcon(mPage.getApps().get(position).getPackageName()));
             } catch (PackageManager.NameNotFoundException e) {
                 e.printStackTrace();
             }
-            ((TextView) appHolder.findViewById(R.id.app_text))
-                    .setText(mApps.get(i).getLabel());
-            ((GridLayout) view).addView(appHolder, layoutParams);
-        }
 
+            return convertView;
+        }
     }
 
+    private static class Holder {
 
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        Log.e("TAG", "only when child return false!");
-        return mGestureDetector.onTouchEvent(event);
-    }
+        public ImageView mImageView;
+        public TextView mTextView;
 
-    @Override
-    public void onClick(View v) {
-        Log.e("TAG", "child click");
-    }
-
-    private class WallpaperGestureListener extends GestureDetector.SimpleOnGestureListener {
-
-        @Override
-        public void onLongPress(MotionEvent e) {
-            Log.e("TAG", "onLongPress");
-
-        }
-        
-
-        @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-            Log.e("TAG", "onScroll");
-            return super.onScroll(e1, e2, distanceX, distanceY);
-        }
     }
 }
 
