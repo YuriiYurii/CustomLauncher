@@ -10,4 +10,5 @@
     <string name="page_height">PAGE_HEIGHT</string>
     <string name="preference_file_name">LAUNCHER_PREFERENCE</string>
     <string name="resolutions_saved">RESOLUTIONS_SAVED</string>
+    <string name="title_activity_trial_cell_layout">TrialCellLayout</string>
 </resources>

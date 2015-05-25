@@ -16,6 +16,8 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.List;
+
 /**
  * Created by yuriitsap on 14.05.15.
  */
@@ -28,7 +30,7 @@ public class PageFragment extends Fragment
     private int mMatrixDimension[] = new int[2];
     private int mScreenResolution[] = new int[2];
     private ClickCallbacks mClickCallbacks;
-    private Page mPage;
+    private List<AppInfo> mPages;
 
     public static PageFragment newInstance(int[] matrixDimension, int[] pageResolution) {
         Bundle args = new Bundle();
@@ -43,7 +45,7 @@ public class PageFragment extends Fragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.desktop_fragment, container, false);
+        return inflater.inflate(R.layout.menu_item_fragment, container, false);
     }
 
     @Override
@@ -69,21 +71,21 @@ public class PageFragment extends Fragment
         return this;
     }
 
-    public PageFragment setPage(Page page) {
-        mPage = page;
+    public PageFragment setPage(List<AppInfo> pages) {
+        mPages = pages;
         return this;
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        view.setTag(R.integer.APP_VIEW_KEY, mPage.getApps().get(position));
+        view.setTag(R.integer.APP_VIEW_KEY, mPages.get(position));
         mClickCallbacks.singleClick(view);
 
     }
 
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        view.setTag(R.integer.APP_VIEW_KEY, mPage.getApps().get(position));
+        view.setTag(R.integer.APP_VIEW_KEY, mPages.get(position));
         mClickCallbacks.longClick(view);
         return true;
     }
@@ -106,17 +108,17 @@ public class PageFragment extends Fragment
 
         @Override
         public int getCount() {
-            return mPage.getApps().size();
+            return mPages.size();
         }
 
         @Override
         public Object getItem(int position) {
-            return mPage.getApps().get(position);
+            return mPages.get(position);
         }
 
         @Override
         public long getItemId(int position) {
-            return mPage.getApps().get(position).getId();
+            return mPages.get(position).getId();
         }
 
         @Override
@@ -129,16 +131,16 @@ public class PageFragment extends Fragment
                 holder.mTextView = (TextView) convertView.findViewById(R.id.app_text);
                 holder.mImageView = (ImageView) convertView.findViewById(R.id.app_icon_logo);
                 ViewGroup.LayoutParams layoutParams = convertView.getLayoutParams();
-                layoutParams.width = mScreenResolution[0] / mMatrixDimension[0];
-                layoutParams.height = mScreenResolution[1] / mMatrixDimension[1];
+//                layoutParams.width = mScreenResolution[0] / mMatrixDimension[0];
+//                layoutParams.height = mScreenResolution[1] / mMatrixDimension[1];
                 convertView.setTag(holder);
             } else {
                 holder = (Holder) convertView.getTag();
             }
             try {
-                holder.mTextView.setText(mPage.getApps().get(position).getLabel());
+                holder.mTextView.setText(mPages.get(position).getLabel());
                 holder.mImageView.setImageDrawable(getActivity().getPackageManager()
-                        .getApplicationIcon(mPage.getApps().get(position).getPackageName()));
+                        .getApplicationIcon(mPages.get(position).getPackageName()));
             } catch (PackageManager.NameNotFoundException e) {
                 e.printStackTrace();
             }

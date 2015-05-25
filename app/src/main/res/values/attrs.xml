@@ -4,4 +4,12 @@
         <attr name="target" format="reference"/>
         <attr name="mask" format="reference"/>
     </declare-styleable>
+    <declare-styleable name="CellLayout">
+        <attr name="columns" format="integer"/>
+        <attr name="spacing" format="dimension"/>
+        <attr name="layout_left" format="integer"/>
+        <attr name="layout_top" format="integer"/>
+        <attr name="layout_cellsWidth" format="integer"/>
+        <attr name="layout_cellsHeight" format="integer"/>
+    </declare-styleable>
 </resources>

@@ -6,6 +6,13 @@
               android:orientation="vertical"
               android:background="@drawable/back"
               tools:context=".MainActivity">
+    <LinearLayout
+            android:id="@+id/dots_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+    </LinearLayout>
 
 
     <FrameLayout android:layout_weight="1"
@@ -13,8 +20,11 @@
                  android:layout_height="match_parent">
         <FrameLayout android:layout_width="match_parent"
                      android:layout_height="match_parent"
+                     android:padding="5dp"
+                     android:clipChildren="false"
                      android:id="@+id/items_menu"
                      android:visibility="invisible">
+
             <View android:layout_width="match_parent"
                   android:layout_height="match_parent"
                   android:background="@color/White"
@@ -34,13 +44,6 @@
         <LinearLayout android:layout_width="match_parent"
                       android:layout_height="match_parent"
                       android:orientation="vertical">
-            <LinearLayout
-                    android:id="@+id/dots_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:orientation="horizontal">
-            </LinearLayout>
             <android.support.v4.view.ViewPager android:id="@+id/desktop_items"
                                                android:layout_weight="1"
                                                android:layout_width="match_parent"

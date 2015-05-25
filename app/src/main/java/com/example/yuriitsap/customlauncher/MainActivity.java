@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.realm.Realm;
-import io.realm.RealmList;
 
 
 public class MainActivity extends ActionBarActivity
@@ -56,12 +55,15 @@ public class MainActivity extends ActionBarActivity
     private int mPageResolution[] = new int[2];
     private int mPagesCount;
     private Realm mRealm;
+    private View mPopupView;
+    private List<AppInfo> mAllApps;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
+        mPopupView = findViewById(R.id.canvas);
         mDotsLayout = (LinearLayout) findViewById(R.id.dots_layout);
         mPagesCount = DEFAULT_PAGES_COUNT;
         initMatrixDimension();
@@ -229,28 +231,20 @@ public class MainActivity extends ActionBarActivity
     }
 
     private void saveAppItems() {
+        mAllApps = new ArrayList<>();
         mRealm = Realm.getInstance(this);
         mResolveInfos = MainActivity.this.getPackageManager()
                 .queryIntentActivities(mMainIntent, 0);
         mRealm.beginTransaction();
-        for (int i = mResolveInfos.size() / (mMatrixDimension[0] * mMatrixDimension[1]); i > 0;
-                i--) {
-            Page page = new Page();
-            page.setPosition(i);
-            page.setId(i);
-            page.setApps(new RealmList<AppInfo>());
-            for (int j = (mMatrixDimension[0] * mMatrixDimension[1] * i) - 1; j
-                    >= (mMatrixDimension[0] * mMatrixDimension[1] * i)
-                    - mMatrixDimension[0] * mMatrixDimension[1]; j--) {
-                AppInfo appInfo = new AppInfo();
-                appInfo.setClsName(mResolveInfos.get(j).activityInfo.name);
-                appInfo.setPackageName(mResolveInfos.get(j).activityInfo.packageName);
-                appInfo.setLabel(mResolveInfos.get(j).loadLabel(getPackageManager()).toString());
-                appInfo.setId(j);
-                mRealm.copyToRealmOrUpdate(appInfo);
-                page.getApps().add(appInfo);
-            }
-            mRealm.copyToRealmOrUpdate(page);
+        int i = 0;
+        for (ResolveInfo resolveInfo : mResolveInfos) {
+            AppInfo appInfo = new AppInfo();
+            appInfo.setClsName(resolveInfo.activityInfo.name);
+            appInfo.setPackageName(resolveInfo.activityInfo.packageName);
+            appInfo.setLabel(resolveInfo.loadLabel(getPackageManager()).toString());
+            appInfo.setId(i++);
+            mAllApps.add(appInfo);
+            mRealm.copyToRealmOrUpdate(appInfo);
         }
         mRealm.commitTransaction();
 
@@ -326,7 +320,6 @@ public class MainActivity extends ActionBarActivity
 
     }
 
-
     private class MenuPagerAdapter extends FragmentStatePagerAdapter {
 
 
@@ -338,12 +331,15 @@ public class MainActivity extends ActionBarActivity
 
         @Override
         public Fragment getItem(int position) {
+            List<AppInfo> appInfos = new ArrayList<>();
+            for (int i = (DEFAULT_COLUMNS_COUNT * DEFAULT_ROWS_COUNT * (position + 1)) - 1;
+                    i >= DEFAULT_COLUMNS_COUNT * DEFAULT_ROWS_COUNT * (position + 1) - (
+                            DEFAULT_COLUMNS_COUNT * DEFAULT_ROWS_COUNT); i--) {
+                appInfos.add(mAllApps.get(i));
+            }
             return PageFragment.newInstance(mMatrixDimension, mPageResolution)
                     .setCallbacks(MainActivity.this)
-                    .setPage(mRealm.where(Page.class)
-                            .equalTo("position", position + 1)
-                            .findAll()
-                            .first());
+                    .setPage(appInfos);
         }
 
 
@@ -357,6 +353,7 @@ public class MainActivity extends ActionBarActivity
 
         @Override
         public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            Log.e("TAG", "pixel offset = " + positionOffsetPixels);
             mDots[position].getBackground()
                     .setColorFilter(Color.rgb((int) (255 * positionOffset),
                                     (int) (255 * positionOffset), (int) (255 * positionOffset)),
