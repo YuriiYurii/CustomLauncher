@@ -62,6 +62,7 @@ public class MainActivity extends ActionBarActivity
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
+        mDotsLayout = (LinearLayout) findViewById(R.id.dots_layout);
         mPagesCount = DEFAULT_PAGES_COUNT;
         initMatrixDimension();
         initAppList();
@@ -74,7 +75,6 @@ public class MainActivity extends ActionBarActivity
         mMenuItems = (ViewPager) findViewById(R.id.all_items_menu);
         mMenuItems.setAdapter(new MenuPagerAdapter(getSupportFragmentManager()));
         mMenuItems.setOnPageChangeListener(new PageStateListener());
-        mDotsLayout = (LinearLayout) findViewById(R.id.dots_layout);
         initLauncherDimensions();
 
         mSpotlightView = (SpotlightView) findViewById(R.id.spot_view);
@@ -82,8 +82,8 @@ public class MainActivity extends ActionBarActivity
 
 
     @Override
-    public void onClick(View v) {
-        int a[] = new int[2];
+    public void onClick(final View v) {
+        final int a[] = new int[2];
         v.getLocationInWindow(a);
         mItemsShown = true;
         mSpotlightView.createShader();
@@ -100,12 +100,18 @@ public class MainActivity extends ActionBarActivity
                                         Math.max(mSpotlightView.getHeight(),
                                                 mSpotlightView.getWidth()) * 2.7f));
                 superScale.setDuration(250);
+
                 AnimatorSet set = new AnimatorSet();
                 set.play(superScale);
                 set.start();
                 set.addListener(new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
+                        View view = findViewById(R.id.all_items_menu);
+                        view.setVisibility(View.VISIBLE);
+                        view.setY(a[1] / 7);
+                        view.setAlpha(0.0f);
+                        view.animate().y(0.0f).alpha(1.0f).start();
                         mDesktopItems.setVisibility(View.INVISIBLE);
                         mMenuLauncher.setVisibility(View.INVISIBLE);
                         findViewById(R.id.spot_view).setVisibility(View.INVISIBLE);
@@ -132,7 +138,9 @@ public class MainActivity extends ActionBarActivity
     }
 
     public void initDots(int count) {
-        mDotsLayout.removeAllViews();
+        if (mDotsLayout.getChildCount() != 0) {
+            mDotsLayout.removeAllViews();
+        }
         mDots = new Button[count];
         for (int i = count - 1; i >= 0; i--) {
             mDots[i] = new Button(this);
