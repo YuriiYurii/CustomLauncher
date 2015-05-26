@@ -9,10 +9,8 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ResolveInfo;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -31,11 +29,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.realm.Realm;
+import io.realm.RealmList;
 
 
 public class MainActivity extends ActionBarActivity
-        implements View.OnClickListener, RecyclerViewAdapter.ClickCallbacks,
-        PageFragment.ClickCallbacks {
+        implements View.OnClickListener, PageFragment.ClickCallbacks {
 
     private final Intent mMainIntent = new Intent(Intent.ACTION_MAIN, null)
             .addCategory(Intent.CATEGORY_LAUNCHER);
@@ -55,7 +53,6 @@ public class MainActivity extends ActionBarActivity
     private int mPageResolution[] = new int[2];
     private int mPagesCount;
     private Realm mRealm;
-    private View mPopupView;
     private List<AppInfo> mAllApps;
 
     @Override
@@ -63,12 +60,11 @@ public class MainActivity extends ActionBarActivity
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-        mPopupView = findViewById(R.id.canvas);
         mDotsLayout = (LinearLayout) findViewById(R.id.dots_layout);
         mPagesCount = DEFAULT_PAGES_COUNT;
         initMatrixDimension();
-        initAppList();
         saveAppItems();
+        initPages();
         mMenuLauncher = (ImageView) findViewById(R.id.menu_popup_launcher);
         mMenuLauncher.setOnClickListener(this);
         mDesktopItems = (ViewPager) findViewById(R.id.desktop_items);
@@ -78,7 +74,6 @@ public class MainActivity extends ActionBarActivity
         mMenuItems.setAdapter(new MenuPagerAdapter(getSupportFragmentManager()));
         mMenuItems.setOnPageChangeListener(new PageStateListener());
         initLauncherDimensions();
-
         mSpotlightView = (SpotlightView) findViewById(R.id.spot_view);
     }
 
@@ -102,7 +97,6 @@ public class MainActivity extends ActionBarActivity
                                         Math.max(mSpotlightView.getHeight(),
                                                 mSpotlightView.getWidth()) * 2.7f));
                 superScale.setDuration(250);
-
                 AnimatorSet set = new AnimatorSet();
                 set.play(superScale);
                 set.start();
@@ -156,36 +150,20 @@ public class MainActivity extends ActionBarActivity
         }
     }
 
-    @Override
-    public void onItemLongClick(final View item) {
-        hideMenu(item);
-    }
-
-    @Override
-    public void onItemClick(AppInfo info) {
-        ComponentName componentName = new ComponentName(info.getPackageName(), info.getClsName());
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_LAUNCHER);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-                Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-        intent.setComponent(componentName);
-        startActivity(intent);
-    }
-
     private void initLauncherDimensions() {
         if (!this.getSharedPreferences(getString(R.string.preference_file_name), MODE_PRIVATE)
                 .getBoolean(getString(R.string.resolutions_saved), false)) {
-            mMenuItems.getViewTreeObserver().addOnPreDrawListener(
+            mDesktopItems.getViewTreeObserver().addOnPreDrawListener(
                     new ViewTreeObserver.OnPreDrawListener() {
                         @Override
                         public boolean onPreDraw() {
-                            mMenuItems.getViewTreeObserver().removeOnPreDrawListener(this);
+                            mDesktopItems.getViewTreeObserver().removeOnPreDrawListener(this);
                             SharedPreferences.Editor editor = MainActivity.this
                                     .getSharedPreferences(getString(R.string.preference_file_name),
                                             MODE_PRIVATE).edit();
-                            editor.putInt(getString(R.string.page_width), mMenuItems.getWidth());
+                            editor.putInt(getString(R.string.page_width), mDesktopItems.getWidth());
                             editor.putInt(getString(R.string.page_height),
-                                    mMenuItems.getHeight());
+                                    mDesktopItems.getHeight());
                             editor.putBoolean(getString(R.string.resolutions_saved), true);
                             editor.commit();
                             mResolutionsSaved = true;
@@ -200,26 +178,6 @@ public class MainActivity extends ActionBarActivity
             mPageResolution[1] = this
                     .getSharedPreferences(getString(R.string.preference_file_name), MODE_PRIVATE)
                     .getInt(getString(R.string.page_height), 0);
-
-
-        }
-
-    }
-
-    public void initAppList() {
-        mMainPageItemsDummy = new ArrayList<>();
-        mInstalledApps = new ArrayList<>();
-        for (ResolveInfo resolveInfo : MainActivity.this.getPackageManager()
-                .queryIntentActivities(mMainIntent, 0)) {
-            Bitmap bitmap = ((BitmapDrawable) resolveInfo.loadIcon(getPackageManager()))
-                    .getBitmap();
-            AppInfo appInfo = new AppInfo();
-            appInfo.setLabel(
-                    resolveInfo.loadLabel(MainActivity.this.getPackageManager()).toString());
-            appInfo.setPackageName(resolveInfo.activityInfo.packageName);
-            appInfo.setClsName(resolveInfo.activityInfo.name);
-            mInstalledApps.add(appInfo);
-
         }
     }
 
@@ -227,7 +185,6 @@ public class MainActivity extends ActionBarActivity
         mMatrixDimension = new int[2];
         mMatrixDimension[0] = DEFAULT_COLUMNS_COUNT;
         mMatrixDimension[1] = DEFAULT_ROWS_COUNT;
-
     }
 
     private void saveAppItems() {
@@ -247,8 +204,16 @@ public class MainActivity extends ActionBarActivity
             mRealm.copyToRealmOrUpdate(appInfo);
         }
         mRealm.commitTransaction();
+    }
 
-
+    private void initPages() {
+        mRealm.beginTransaction();
+        for (int i = mPagesCount; i >= 0; i--) {
+            Page page = new Page();
+            page.setApps(new RealmList<AppInfo>());
+            page.setId(i);
+            mRealm.copyToRealmOrUpdate(page);
+        }
     }
 
     private void hideMenu(final View view) {
@@ -302,6 +267,7 @@ public class MainActivity extends ActionBarActivity
             final View.DragShadowBuilder dragShadowBuilder
                     = new View.DragShadowBuilder(view);
             view.startDrag(clipData, dragShadowBuilder, view, 0);
+            hideMenu(view);
 
         }
         return true;
@@ -320,6 +286,25 @@ public class MainActivity extends ActionBarActivity
 
     }
 
+    private class DesktopPagerAdapter extends FragmentStatePagerAdapter {
+
+        public DesktopPagerAdapter(FragmentManager fm) {
+            super(fm);
+            initDots(this.getCount());
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return DesktopPageFragment.newInstance().setPage(
+                    mRealm.where(Page.class).equalTo("position", position + 1).findAll().first());
+        }
+
+        @Override
+        public int getCount() {
+            return mPagesCount;
+        }
+    }
+
     private class MenuPagerAdapter extends FragmentStatePagerAdapter {
 
 
@@ -327,7 +312,6 @@ public class MainActivity extends ActionBarActivity
             super(fm);
             initDots(this.getCount());
         }
-
 
         @Override
         public Fragment getItem(int position) {
@@ -342,10 +326,9 @@ public class MainActivity extends ActionBarActivity
                     .setPage(appInfos);
         }
 
-
         @Override
         public int getCount() {
-            return 6;
+            return mPagesCount;
         }
     }
 
@@ -353,7 +336,6 @@ public class MainActivity extends ActionBarActivity
 
         @Override
         public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-            Log.e("TAG", "pixel offset = " + positionOffsetPixels);
             mDots[position].getBackground()
                     .setColorFilter(Color.rgb((int) (255 * positionOffset),
                                     (int) (255 * positionOffset), (int) (255 * positionOffset)),

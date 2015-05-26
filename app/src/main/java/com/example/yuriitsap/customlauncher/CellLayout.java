@@ -48,7 +48,6 @@ public class CellLayout extends ViewGroup {
         }
     }
 
-
     public static class LayoutParams extends ViewGroup.LayoutParams {
 
         int top = 0;

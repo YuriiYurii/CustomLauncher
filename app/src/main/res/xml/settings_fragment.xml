@@ -5,5 +5,19 @@
             android:key="parent_checkbox_preference"
             android:title="Some title"
             android:summary="Some summary"/>
+    <CheckBoxPreference
+            android:key="parent_checkbox_preference"
+            android:title="Some title"
+            android:summary="Some summary"/>
+    <EditTextPreference
+            android:key="row_count"
+            android:title="Enter row count"
+            android:summary="Row Summary"
+            android:inputType="number"/>
+    <EditTextPreference
+            android:key="column_count"
+            android:title="Enter row count"
+            android:summary="Row Summary"
+            android:inputType="number"/>
 
 </PreferenceScreen>
